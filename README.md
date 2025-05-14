@@ -39,14 +39,14 @@ Sign up here on [DigitalOcean](https://www.digitalocean.com/?refcode=66e3dacc4b8
 ### ✅ PostgreSQL Setup
 
 In EasyPanel:
-- Create a service → PostgreSQL
+- Add service → Search for PostgreSQL
 - Name: n8n-postgres
 - Save the internal credentials
 
 ###✅ Redis Setup
 
 In EasyPanel:
-- Create a service → Redis
+- Add service → Search for Redis
 - Name: n8n-redis
 - Save the external host, port, and password
 
