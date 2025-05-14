@@ -80,8 +80,7 @@ In n8n:
 ### ✅ Import Chatbot Template
 
 You will need a base chatbot template.
-Paste or import it via the n8n interface:
-<LINK DE DONWLOAD TEMPLATE>
+Paste or import via the n8n interface, the template is at the beginning of the repository.
 
 ## 4. 🧠 Workflow Logic Overview
 
