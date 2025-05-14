@@ -1,6 +1,6 @@
 # 🤖How to Build an AI WhatsApp Agent Using n8n
 
-## This professional guide will walk you through building a WhatsApp chatbot using n8n, Evolution API, and OpenAI. You'll learn how to:
+### This professional guide will walk you through building a WhatsApp chatbot using n8n, Evolution API, and OpenAI. You'll learn how to:
 
 - Set up a VPS
 - Install and configure n8n, Redis, PostgreSQL, and Evolution API
