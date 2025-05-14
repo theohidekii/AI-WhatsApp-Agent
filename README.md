@@ -7,7 +7,7 @@
 - Create a webhook-based chatbot
 - Integrate LLMs for intelligent message handling
 
-🔴 This version focuses exclusively on the chatbot logic, excluding scheduling features.
+### 🔴 This version focuses exclusively on the chatbot logic, excluding scheduling features.
 
 ### 🚀 Features
 - WhatsApp integration with webhook via Evolution API
@@ -70,7 +70,7 @@ In EasyPanel:
 
 ## 3. 📲 Creating the n8n Chatbot Workflow
 
-###✅ Import Community Node for Evolution API
+### ✅ Import Community Node for Evolution API
 
 In n8n:
 - Go to Settings → Community Nodes
