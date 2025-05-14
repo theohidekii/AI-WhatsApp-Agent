@@ -1,5 +1,5 @@
 {
-  "name": "ChatBot - Progamacao Web",
+  "name": "ChatBot",
   "nodes": [
     {
       "parameters": {
@@ -15,7 +15,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        1600,
+        1640,
         1120
       ],
       "alwaysOutputData": true
@@ -39,7 +39,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2040,
+        2100,
         1120
       ],
       "alwaysOutputData": true
@@ -63,7 +63,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1820,
+        1860,
         1400
       ]
     },
@@ -78,7 +78,7 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.6,
       "position": [
-        1820,
+        1860,
         1120
       ],
       "credentials": {
@@ -149,7 +149,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1300,
+        1400,
         1300
       ],
       "alwaysOutputData": false
@@ -209,7 +209,9 @@
     {
       "parameters": {
         "resource": "messages-api",
-        "instanceName": "test",
+        "instanceName": "teste1",
+        "remoteJid": "5561982101216",
+        "messageText": "text",
         "options_message": {}
       },
       "type": "n8n-nodes-evolution-api.evolutionApi",
@@ -230,7 +232,7 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "=Put here your prompt for the IA"
+          "systemMessage": "=Instruções para Atendimento:\n\nSaudação Inicial:\n\n\"Olá, seja muito bem-vindo à VivaBem Imóveis! Meu nome é CintIA e estou aqui para ajudar. Em que posso te auxiliar hoje?\"\n\nIdentificar a Necessidade do Cliente:\n\nCompra, aluguel ou venda?\n\nTipo de imóvel? (Apartamento, casa, sala comercial...)\n\nFaixa de preço desejada\n\nLocalização preferida\n\nApresentar Modelos Disponíveis:\n\nUtilizar o arquivo ou sistema com os modelos descritos abaixo\n\nEncaminhamento:\n\nAgendar visita ou encaminhar para corretor especializado\n\nDespedida Cordial:\n\n\"Agradecemos o seu contato! Qualquer coisa, estamos à disposição.\"\n\nModelos de Apartamentos\n\n1. Residencial Bella VistaLocalização: CentroTamanho: 80 m²Quartos: 2 (1 suíte)Vaga: 1 garagemValor: R$ 350.000,00 (Venda) ou R$ 2.200,00/mês (Aluguel)\n\n2. Condomínio Morada do SolLocalização: Bairro Jardim FloridoTamanho: 95 m²Quartos: 3 (1 suíte)Vaga: 2 garagensValor: R$ 480.000,00 (Venda)\n\n3. Loft Nova EraLocalização: Região Central EmpresarialTamanho: 60 m²Quarto: 1 (estilo loft)Vaga: 1 garagemValor: R$ 1.800,00/mês (Aluguel)\n\n4. Edifício Vista ParqueLocalização: Prox. ao Parque das ÁguasTamanho: 110 m²Quartos: 3 (1 suíte + 1 dependência)Vaga: 2 garagensValor: R$ 3.200,00/mês (Aluguel)"
         }
       },
       "id": "d1bf8470-db5c-43f6-8103-322d8f6824ea",
@@ -254,12 +256,56 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        1020,
+        1000,
         1300
       ],
       "id": "6d75cae0-3ac9-43b8-8587-47e4ec7da13f",
       "name": "Webhook",
       "webhookId": "6882e04c-92e2-4277-89f0-fea71ca230a6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "17b6fa1c-f4ea-4c75-9c9e-1a43900dbc58",
+              "leftValue": "={{ $json.body.apikey }}",
+              "rightValue": "3FE8AFBDF281-4365-973F-F55A813DF487",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "70c82c3b-7619-4b50-899f-17931323d19d",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "messages.upsert",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6179f7f6-5bdc-4ea0-80e8-7648db6504b8",
+      "name": "auth",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        1300
+      ]
     }
   ],
   "pinData": {},
@@ -372,6 +418,24 @@
     },
     "Webhook": {
       "main": [
+        [
+          {
+            "node": "auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "auth": {
+      "main": [
+        [
+          {
+            "node": "mensagem_tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "mensagem_tipo",
