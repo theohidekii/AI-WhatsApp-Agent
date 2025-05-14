@@ -30,7 +30,7 @@ Sign up here on [DigitalOcean](https://www.digitalocean.com/?refcode=66e3dacc4b8
 
 ### ✅ Install EasyPanel
 
-- Once the droplet is ready:
+- Once the droplet is ready
 - Just click on "Get Started" to access EasyPanel 
 - Create a user and login.
 
