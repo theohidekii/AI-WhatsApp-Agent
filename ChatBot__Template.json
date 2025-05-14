@@ -1,0 +1,396 @@
+{
+  "name": "ChatBot - Progamacao Web",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "body.data.message.base64",
+        "options": {
+          "fileName": "file.ogg",
+          "mimeType": "={{ $json.body.data.message.audioMessage.mimetype }}"
+        }
+      },
+      "id": "d8f37dca-e560-410f-8573-d569ecd044f4",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        1120
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7066ff08-1370-464f-a588-86aa37025523",
+              "name": "texto",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "61a9cd84-5688-482b-b4d3-5251e995bb5c",
+      "name": "edit1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2040,
+        1120
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "09db48f1-b99e-4760-8a9b-10944a1ce0d2",
+              "name": "texto",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c28cb772-e5e5-4af0-85e4-e776af5fab7f",
+      "name": "edit2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1820,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "5501bff1-7ca9-47ae-81ba-aa9b88f22197",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        1820,
+        1120
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "p5If24WSrKFNcxcq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "rightValue": "audioMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "50c6e2b0-2494-4780-abd8-84a0e4213091",
+                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "rightValue": "conversation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "texto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3786a21-f6ee-432a-ba3e-1d82823d4961",
+      "name": "mensagem_tipo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1300,
+        1300
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {},
+      "id": "7d8fa75f-32e8-4791-91e4-bdd0be23e820",
+      "name": "mensagem_cliente",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2320,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1-mini",
+        "options": {}
+      },
+      "id": "304fe7a6-c261-4942-b4e0-422ab5d18a23",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2500,
+        1460
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "p5If24WSrKFNcxcq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=",
+        "contextWindowLength": 20
+      },
+      "id": "07c60154-8d81-4afa-b64e-193e02b2cd1c",
+      "name": "Redis Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.3,
+      "position": [
+        2660,
+        1480
+      ],
+      "credentials": {
+        "redis": {
+          "id": "DcZvSilR0TOevySg",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "test",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        2940,
+        1280
+      ],
+      "id": "a0b1cd7b-794a-4a4e-a5fb-4c4063c40181",
+      "name": "Evolution API",
+      "credentials": {
+        "evolutionApi": {
+          "id": "k9N9ocaiVDoSEkgv",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=Put here your prompt for the IA"
+        }
+      },
+      "id": "d1bf8470-db5c-43f6-8103-322d8f6824ea",
+      "name": "Agente wpp",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        2600,
+        1280
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "6882e04c-92e2-4277-89f0-fea71ca230a6",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        1300
+      ],
+      "id": "6d75cae0-3ac9-43b8-8587-47e4ec7da13f",
+      "name": "Webhook",
+      "webhookId": "6882e04c-92e2-4277-89f0-fea71ca230a6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "edit1": {
+      "main": [
+        [
+          {
+            "node": "mensagem_cliente",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "edit2": {
+      "main": [
+        [
+          {
+            "node": "mensagem_cliente",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "edit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mensagem_tipo": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "edit2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente wpp",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente wpp",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mensagem_cliente": {
+      "main": [
+        [
+          {
+            "node": "Agente wpp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente wpp": {
+      "main": [
+        [
+          {
+            "node": "Evolution API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "mensagem_tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0042a212-5af2-42d0-be54-bd7ec3c5ab3d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "245151b650570b841e2fa163a0bca80ab8e971021a4211fce29ba3b8f2fceb9b"
+  },
+  "id": "OGbrSbKldcSKTfDX",
+  "tags": []
+}
