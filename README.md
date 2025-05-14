@@ -43,7 +43,7 @@ In EasyPanel:
 - Name: n8n-postgres
 - Save the internal credentials
 
-###✅ Redis Setup
+## ✅ Redis Setup
 
 In EasyPanel:
 - Add service → Search for Redis
