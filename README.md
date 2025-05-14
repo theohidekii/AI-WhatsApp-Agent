@@ -24,7 +24,7 @@
 - Use DigitalOcean for quick deployment:
 Sign up here on [DigitalOcean](https://www.digitalocean.com/?refcode=66e3dacc4b8c&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge) for $200 credit.
 - Create a new project and droplet
-- Plan: Basic ($4 or $6)
+- Plan: Basic ($6 or $12)
 - Select region close to you
 - Enable password or SSH login
 
