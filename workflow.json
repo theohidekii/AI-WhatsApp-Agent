@@ -107,7 +107,6 @@
       ],
       "credentials": {
         "openAiApi": {
-          "id": "p5If24WSrKFNcxcq",
           "name": "OpenAi account"
         }
       }
@@ -193,7 +192,6 @@
       ],
       "credentials": {
         "openAiApi": {
-          "id": "p5If24WSrKFNcxcq",
           "name": "OpenAi account"
         }
       }
@@ -214,7 +212,6 @@
       ],
       "credentials": {
         "redis": {
-          "id": "DcZvSilR0TOevySg",
           "name": "Redis account"
         }
       }
@@ -237,7 +234,6 @@
       "name": "Enviar resposta",
       "credentials": {
         "evolutionApi": {
-          "id": "k9N9ocaiVDoSEkgv",
           "name": "Evolution account"
         }
       }
@@ -265,7 +261,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "6882e04c-92e2-4277-89f0-fea71ca230a6",
+        "path": "9473e9c6-c974-42ce-8f5a-fccb2ee8047b",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
@@ -276,7 +272,7 @@
       ],
       "id": "6d75cae0-3ac9-43b8-8587-47e4ec7da13f",
       "name": "Webhook",
-      "webhookId": "6882e04c-92e2-4277-89f0-fea71ca230a6"
+      "webhookId": "9473e9c6-c974-42ce-8f5a-fccb2ee8047b"
     },
     {
       "parameters": {
