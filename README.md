@@ -1,132 +1,85 @@
-# 🤖How to Build an AI WhatsApp Agent Using n8n
+# 🤖 AI WhatsApp Agent with n8n
 
-### This professional guide will walk you through building a WhatsApp chatbot using n8n, Evolution API, and OpenAI. You'll learn how to:
+A ready-to-import **n8n workflow** for a WhatsApp customer-service agent. It runs on [Evolution API](https://github.com/EvolutionAPI/evolution-api) + OpenAI, understands **text and voice messages**, and keeps a **separate conversation memory per contact** in Redis.
 
-- Set up a VPS
-- Install and configure n8n, Redis, PostgreSQL, and Evolution API
-- Create a webhook-based chatbot
-- Integrate LLMs for intelligent message handling
+This repo also includes a step-by-step guide to self-host the whole stack on a single VPS.
 
-### 🔴 This version focuses exclusively on the chatbot logic, excluding scheduling features.
+## How it works
 
-### 🚀 Features
-- WhatsApp integration with webhook via Evolution API
-- Message classification using LLM (OpenAI GPT-4)
-- Smart responses using a knowledge base
-- Audio message transcription using Whisper API
-- Text/Audio differentiation and processing
-- Redis-based memory for contextual interaction
+```mermaid
+flowchart LR
+    W[Webhook<br/>Evolution API] --> V{Validate request<br/>API key · messages.upsert · not fromMe}
+    V -->|valid| T{Message type}
+    T -->|audio| B[Base64 → file] --> WH[Whisper<br/>transcription] --> A1[Normalize text]
+    T -->|text| A2[Normalize text]
+    A1 --> AG[AI Agent<br/>gpt-4.1-mini]
+    A2 --> AG
+    M[(Redis memory<br/>per contact)] -.-> AG
+    AG --> S[Send reply<br/>Evolution API]
+```
 
-## 1. 🖥️ VPS Setup with DigitalOcean + EasyPanel
+| Step | Node | What it does |
+| --- | --- | --- |
+| 1 | `Webhook` | Receives every event from Evolution API |
+| 2 | `Validar requisição` | Accepts only requests with your instance API key, `messages.upsert` events, and messages **not sent by the bot itself** (prevents reply loops) |
+| 3 | `Tipo de mensagem` | Routes `audioMessage` and `conversation` |
+| 4 | `Transcrever áudio (Whisper)` | Converts the base64 voice note to a file and transcribes it |
+| 5 | `Texto do áudio` / `Texto da mensagem` | Normalizes both paths into the same fields: `texto`, `numero`, `instancia` |
+| 6 | `Agente de atendimento` | LangChain agent with a system prompt and Redis memory keyed by the sender's number |
+| 7 | `Enviar resposta` | Replies to the same contact, on the same instance that received the message |
 
-### ✅ Create a VPS
+The bundled system prompt is a **fictional real-estate agency** ("VivaBem Imóveis"). Replace it with your own business rules, catalog and tone.
 
-- Use DigitalOcean for quick deployment:
-Sign up here on [DigitalOcean](https://www.digitalocean.com/?refcode=66e3dacc4b8c&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge) for $200 credit.
-- Create a new project and droplet
-- Plan: Basic ($6 or $12)
-- Select region close to you
-- Enable password or SSH login
+## Stack
 
-### ✅ Install EasyPanel
+- **n8n** for orchestration (`@n8n/n8n-nodes-langchain` agent)
+- **Evolution API** as the WhatsApp gateway
+- **OpenAI**: `gpt-4.1-mini` for replies and Whisper for transcription
+- **Redis** for chat memory and **PostgreSQL** for n8n and Evolution data
+- **EasyPanel** on any VPS (Docker under the hood)
 
-- Once the droplet is ready
-- Just click on "Get Started" to access EasyPanel 
-- Create a user and login.
+## 1. Server setup
 
-## 2. ⚙️ Set Up Services (PostgreSQL, Redis, n8n, Evolution)
+1. Create a VPS (1 vCPU / 2 GB RAM is enough to start) with Ubuntu 22.04+ and install [EasyPanel](https://easypanel.io/docs).
+2. In EasyPanel, add these services:
+   - **PostgreSQL**, named `n8n-postgres`
+   - **Redis**, named `n8n-redis`
+   - **n8n**, pointing to the Postgres service
+   - **Evolution API**, as a Docker app using `ghcr.io/evolutionapi/evolution-api:<latest-release>`, with env vars from the project's `.env.example`, the Postgres/Redis connection strings, a strong `AUTHENTICATION_API_KEY`, and port `8080` exposed
+3. Open `https://<evolution-domain>/manager`, create an instance, and pair your WhatsApp with the QR code.
 
-### ✅ PostgreSQL Setup
+## 2. Evolution API instance
 
-In EasyPanel:
-- Add service → Search for PostgreSQL
-- Name: n8n-postgres
-- Save the internal credentials
+In the instance settings:
 
-### ✅ Redis Setup
+- **Webhook URL:** the production URL of the n8n `Webhook` node
+- **Events:** `MESSAGES_UPSERT`
+- **Webhook base64:** **on** (required for voice notes)
 
-In EasyPanel:
-- Add service → Search for Redis
-- Name: n8n-redis
-- Save the external host, port, and password
+## 3. Import the workflow
 
-### ✅ n8n Installation
+1. In n8n, go to **Settings → Community nodes** and install `n8n-nodes-evolution-api`.
+2. Create a new workflow and use **Import from file** with [`workflow.json`](./workflow.json).
+3. Create credentials and select them in the nodes: **OpenAI**, **Redis** and **Evolution API**.
+4. In `Validar requisição`, replace `COLE_AQUI_A_API_KEY_DA_SUA_INSTANCIA` with your **instance** API key. Evolution sends it in every webhook as `body.apikey`.
+5. Edit the agent's system prompt and activate the workflow.
 
- In EasyPanel:
-- Add service → Search for n8n
+## 4. Test
 
-### ✅ Evolution API Installation
+- Send a text and a voice note to the paired number from **another** phone.
+- Follow each run in **n8n → Executions**.
 
-- Go to https://github.com/EvolutionAPI/evolution-api
-- Copy the latest Docker image version from the Releases page
-- In EasyPanel, create a Docker app:
-- Name: evolution
-- Docker image: ghcr.io/evolutionapi/evolution-api:<version>
-- Copy environment variables from .env.example in the repo
-- Set POSTGRES/REDIS credentials using EasyPanel’s connection strings
-- Set a strong API_KEY
-- Expose port 8080, and use /manager to access the dashboard
-- Pair your WhatsApp via QR code
+## Security notes
 
-## 3. 📲 Creating the n8n Chatbot Workflow
+- Never commit real API keys, webhook paths or phone numbers. n8n exports credentials only as IDs, but **values typed into node fields are exported in plain text**.
+- Keep the webhook validation node. Without it, anyone who finds the URL can make your bot send messages and spend your OpenAI credits.
 
-### ✅ Import Community Node for Evolution API
+## Roadmap
 
-In n8n:
-- Go to Settings → Community Nodes
-- Add: n8n-nodes-evolution
-- Restart n8n
+- [ ] Scheduling flow (calendar integration)
+- [ ] Human handoff when the customer asks for an agent
+- [ ] Knowledge base (RAG) instead of a catalog inside the prompt
 
-### ✅ Import Chatbot Template
+## License
 
-You will need a base chatbot template.
-Paste or import via the n8n interface, the template is at the beginning of the repository.
-
-## 4. 🧠 Workflow Logic Overview
-
-### 🔹 Webhook Trigger
-
-- Triggers on incoming WhatsApp message
-- Filter by correct API Key and eventType = upsert
-
-### 🔹 Message Type Routing
-
-Use a Switch node to check if the message is:
-- Text: send directly to AI
-- Audio: use Whisper API to transcribe
-
-### 🔹 Whisper Integration (if audio)
-
-- HTTP Request to OpenAI Whisper
-- Transcribe base64 audio (check Evolution setting webhookBase64=true)
-
-### 🔹 Intent Classification
-
-- AI Agent 1: Receptionist (classifies message as information or scheduling)
-- Prompt Example:
-
-You are a specialist in classifying customer messages into two categories: 'information' or 'scheduling'.
-
-### 🔹 Commercial Assistant Response
-
-- If information, forward to AI Agent 2: Sales Assistant
-- Use RAG (Retrieval-Augmented Generation) if needed with file attachments
-- Provide product details, FAQs, and encourage visit scheduling
-
-### 🔹 Send Response
-
-Use Evolution API node to send back the AI-generated text
-
-Fill in:
-
-- Session name
-- Recipient number
-- Message text
-
-## 5. 🧪 Testing Your Bot
-
-- Send a message to your connected WhatsApp number
-- Monitor execution in n8n → Executions
-- Check logs and message delivery on your device
-
-
+[MIT](./LICENSE)

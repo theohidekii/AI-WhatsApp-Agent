@@ -1,5 +1,5 @@
 {
-  "name": "ChatBot",
+  "name": "AI WhatsApp Agent (Evolution API + OpenAI)",
   "nodes": [
     {
       "parameters": {
@@ -11,7 +11,7 @@
         }
       },
       "id": "d8f37dca-e560-410f-8573-d569ecd044f4",
-      "name": "Convert to File",
+      "name": "Base64 para arquivo",
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
@@ -25,9 +25,21 @@
         "assignments": {
           "assignments": [
             {
-              "id": "7066ff08-1370-464f-a588-86aa37025523",
+              "id": "a1-texto",
               "name": "texto",
               "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "a1-numero",
+              "name": "numero",
+              "value": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "a1-instancia",
+              "name": "instancia",
+              "value": "={{ $('Webhook').item.json.body.instance }}",
               "type": "string"
             }
           ]
@@ -35,7 +47,7 @@
         "options": {}
       },
       "id": "61a9cd84-5688-482b-b4d3-5251e995bb5c",
-      "name": "edit1",
+      "name": "Texto do áudio",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
@@ -49,9 +61,21 @@
         "assignments": {
           "assignments": [
             {
-              "id": "09db48f1-b99e-4760-8a9b-10944a1ce0d2",
+              "id": "a2-texto",
               "name": "texto",
               "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            },
+            {
+              "id": "a2-numero",
+              "name": "numero",
+              "value": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "a2-instancia",
+              "name": "instancia",
+              "value": "={{ $('Webhook').item.json.body.instance }}",
               "type": "string"
             }
           ]
@@ -59,7 +83,7 @@
         "options": {}
       },
       "id": "c28cb772-e5e5-4af0-85e4-e776af5fab7f",
-      "name": "edit2",
+      "name": "Texto da mensagem",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
@@ -74,7 +98,7 @@
         "options": {}
       },
       "id": "5501bff1-7ca9-47ae-81ba-aa9b88f22197",
-      "name": "OpenAI",
+      "name": "Transcrever áudio (Whisper)",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.6,
       "position": [
@@ -83,7 +107,6 @@
       ],
       "credentials": {
         "openAiApi": {
-          "id": "p5If24WSrKFNcxcq",
           "name": "OpenAi account"
         }
       }
@@ -145,7 +168,7 @@
         "options": {}
       },
       "id": "e3786a21-f6ee-432a-ba3e-1d82823d4961",
-      "name": "mensagem_tipo",
+      "name": "Tipo de mensagem",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
@@ -153,17 +176,6 @@
         1300
       ],
       "alwaysOutputData": false
-    },
-    {
-      "parameters": {},
-      "id": "7d8fa75f-32e8-4791-91e4-bdd0be23e820",
-      "name": "mensagem_cliente",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        2320,
-        1280
-      ]
     },
     {
       "parameters": {
@@ -180,7 +192,6 @@
       ],
       "credentials": {
         "openAiApi": {
-          "id": "p5If24WSrKFNcxcq",
           "name": "OpenAi account"
         }
       }
@@ -188,7 +199,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "=",
+        "sessionKey": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
         "contextWindowLength": 20
       },
       "id": "07c60154-8d81-4afa-b64e-193e02b2cd1c",
@@ -201,7 +212,6 @@
       ],
       "credentials": {
         "redis": {
-          "id": "DcZvSilR0TOevySg",
           "name": "Redis account"
         }
       }
@@ -209,9 +219,9 @@
     {
       "parameters": {
         "resource": "messages-api",
-        "instanceName": "teste1",
-        "remoteJid": "5561982101216",
-        "messageText": "text",
+        "instanceName": "={{ $('Webhook').item.json.body.instance }}",
+        "remoteJid": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
+        "messageText": "={{ $json.output }}",
         "options_message": {}
       },
       "type": "n8n-nodes-evolution-api.evolutionApi",
@@ -221,10 +231,9 @@
         1280
       ],
       "id": "a0b1cd7b-794a-4a4e-a5fb-4c4063c40181",
-      "name": "Evolution API",
+      "name": "Enviar resposta",
       "credentials": {
         "evolutionApi": {
-          "id": "k9N9ocaiVDoSEkgv",
           "name": "Evolution account"
         }
       }
@@ -232,11 +241,13 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "=Instruções para Atendimento:\n\nSaudação Inicial:\n\n\"Olá, seja muito bem-vindo à VivaBem Imóveis! Meu nome é CintIA e estou aqui para ajudar. Em que posso te auxiliar hoje?\"\n\nIdentificar a Necessidade do Cliente:\n\nCompra, aluguel ou venda?\n\nTipo de imóvel? (Apartamento, casa, sala comercial...)\n\nFaixa de preço desejada\n\nLocalização preferida\n\nApresentar Modelos Disponíveis:\n\nUtilizar o arquivo ou sistema com os modelos descritos abaixo\n\nEncaminhamento:\n\nAgendar visita ou encaminhar para corretor especializado\n\nDespedida Cordial:\n\n\"Agradecemos o seu contato! Qualquer coisa, estamos à disposição.\"\n\nModelos de Apartamentos\n\n1. Residencial Bella VistaLocalização: CentroTamanho: 80 m²Quartos: 2 (1 suíte)Vaga: 1 garagemValor: R$ 350.000,00 (Venda) ou R$ 2.200,00/mês (Aluguel)\n\n2. Condomínio Morada do SolLocalização: Bairro Jardim FloridoTamanho: 95 m²Quartos: 3 (1 suíte)Vaga: 2 garagensValor: R$ 480.000,00 (Venda)\n\n3. Loft Nova EraLocalização: Região Central EmpresarialTamanho: 60 m²Quarto: 1 (estilo loft)Vaga: 1 garagemValor: R$ 1.800,00/mês (Aluguel)\n\n4. Edifício Vista ParqueLocalização: Prox. ao Parque das ÁguasTamanho: 110 m²Quartos: 3 (1 suíte + 1 dependência)Vaga: 2 garagensValor: R$ 3.200,00/mês (Aluguel)"
-        }
+          "systemMessage": "=Instruções para Atendimento:\n\nSaudação Inicial:\n\n\"Olá, seja muito bem-vindo à VivaBem Imóveis! Meu nome é CintIA e estou aqui para ajudar. Em que posso te auxiliar hoje?\"\n\nIdentificar a Necessidade do Cliente:\n\nCompra, aluguel ou venda?\n\nTipo de imóvel? (Apartamento, casa, sala comercial...)\n\nFaixa de preço desejada\n\nLocalização preferida\n\nApresentar Modelos Disponíveis:\n\nUtilizar o arquivo ou sistema com os modelos descritos abaixo\n\nEncaminhamento:\n\nAgendar visita ou encaminhar para corretor especializado\n\nDespedida Cordial:\n\n\"Agradecemos o seu contato! Qualquer coisa, estamos à disposição.\"\n\nModelos de Apartamentos\n\n1. Residencial Bella Vista\nLocalização: Centro\nTamanho: 80 m²\nQuartos: 2 (1 suíte)\nVaga: 1 garagem\nValor: R$ 350.000,00 (Venda) ou R$ 2.200,00/mês (Aluguel)\n\n2. Condomínio Morada do Sol\nLocalização: Bairro Jardim Florido\nTamanho: 95 m²\nQuartos: 3 (1 suíte)\nVaga: 2 garagens\nValor: R$ 480.000,00 (Venda)\n\n3. Loft Nova Era\nLocalização: Região Central Empresarial\nTamanho: 60 m²\nQuarto: 1 (estilo loft)\nVaga: 1 garagem\nValor: R$ 1.800,00/mês (Aluguel)\n\n4. Edifício Vista Parque\nLocalização: Prox. ao Parque das Águas\nTamanho: 110 m²\nQuartos: 3 (1 suíte + 1 dependência)\nVaga: 2 garagens\nValor: R$ 3.200,00/mês (Aluguel)"
+        },
+        "promptType": "define",
+        "text": "={{ $json.texto }}"
       },
       "id": "d1bf8470-db5c-43f6-8103-322d8f6824ea",
-      "name": "Agente wpp",
+      "name": "Agente de atendimento",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
       "position": [
@@ -250,7 +261,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "6882e04c-92e2-4277-89f0-fea71ca230a6",
+        "path": "9473e9c6-c974-42ce-8f5a-fccb2ee8047b",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
@@ -261,7 +272,7 @@
       ],
       "id": "6d75cae0-3ac9-43b8-8587-47e4ec7da13f",
       "name": "Webhook",
-      "webhookId": "6882e04c-92e2-4277-89f0-fea71ca230a6"
+      "webhookId": "9473e9c6-c974-42ce-8f5a-fccb2ee8047b"
     },
     {
       "parameters": {
@@ -276,7 +287,7 @@
             {
               "id": "17b6fa1c-f4ea-4c75-9c9e-1a43900dbc58",
               "leftValue": "={{ $json.body.apikey }}",
-              "rightValue": "3FE8AFBDF281-4365-973F-F55A813DF487",
+              "rightValue": "COLE_AQUI_A_API_KEY_DA_SUA_INSTANCIA",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -292,6 +303,16 @@
                 "operation": "equals",
                 "name": "filter.operator.equals"
               }
+            },
+            {
+              "id": "b1f0c2de-6a7e-4c1a-9d1e-2f3a4b5c6d7e",
+              "leftValue": "={{ $json.body.data.key.fromMe }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -299,7 +320,7 @@
         "options": {}
       },
       "id": "6179f7f6-5bdc-4ea0-80e8-7648db6504b8",
-      "name": "auth",
+      "name": "Validar requisição",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
@@ -310,62 +331,95 @@
   ],
   "pinData": {},
   "connections": {
-    "Convert to File": {
+    "Webhook": {
       "main": [
         [
           {
-            "node": "OpenAI",
+            "node": "Validar requisição",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "edit1": {
+    "Validar requisição": {
       "main": [
         [
           {
-            "node": "mensagem_cliente",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "edit2": {
-      "main": [
-        [
-          {
-            "node": "mensagem_cliente",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "OpenAI": {
-      "main": [
-        [
-          {
-            "node": "edit1",
+            "node": "Tipo de mensagem",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "mensagem_tipo": {
+    "Tipo de mensagem": {
       "main": [
         [
           {
-            "node": "Convert to File",
+            "node": "Base64 para arquivo",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "edit2",
+            "node": "Texto da mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base64 para arquivo": {
+      "main": [
+        [
+          {
+            "node": "Transcrever áudio (Whisper)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever áudio (Whisper)": {
+      "main": [
+        [
+          {
+            "node": "Texto do áudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Texto do áudio": {
+      "main": [
+        [
+          {
+            "node": "Agente de atendimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Texto da mensagem": {
+      "main": [
+        [
+          {
+            "node": "Agente de atendimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente de atendimento": {
+      "main": [
+        [
+          {
+            "node": "Enviar resposta",
             "type": "main",
             "index": 0
           }
@@ -376,7 +430,7 @@
       "ai_languageModel": [
         [
           {
-            "node": "Agente wpp",
+            "node": "Agente de atendimento",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -387,59 +441,8 @@
       "ai_memory": [
         [
           {
-            "node": "Agente wpp",
+            "node": "Agente de atendimento",
             "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "mensagem_cliente": {
-      "main": [
-        [
-          {
-            "node": "Agente wpp",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Agente wpp": {
-      "main": [
-        [
-          {
-            "node": "Evolution API",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "auth",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "auth": {
-      "main": [
-        [
-          {
-            "node": "mensagem_tipo",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "mensagem_tipo",
-            "type": "main",
             "index": 0
           }
         ]
@@ -450,11 +453,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "0042a212-5af2-42d0-be54-bd7ec3c5ab3d",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "245151b650570b841e2fa163a0bca80ab8e971021a4211fce29ba3b8f2fceb9b"
-  },
-  "id": "OGbrSbKldcSKTfDX",
   "tags": []
 }
